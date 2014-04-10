@@ -36,12 +36,14 @@ class person():
 
     def getAge(self):
         return self.age if hasattr(self,'age') else calc_age(datetime.strptime(self.data['birth_date'].split('T')[0],"%Y-%M-%d").date())
+    def getId(self):
+        return self.data['id']
     def getName(self):
         return self.data['name']
-
     def getBio(self):
         return  self.data['bio']
-
+    def likeUser(self):
+        None
     def __str__(self):
         return str(self.data)
 
@@ -54,48 +56,60 @@ class person():
 class client():
     def __init__(self):
         self.req = url.HTTPSConnectionPool(URL)
-        print self.req.request('POST','/auth',fields= {"facebook_token":facebook_token}).data
+        self.HEADERS = HEADERS
+        self.HEADERS['X-Auth-Token'] = js.decode(self.req.request('POST','/auth',fields= {"facebook_token":facebook_token}).data)['token']
+    def gatherUsersInfo(self, numOfUsers, keywords= None):
+        users = []
+        if keywords is None:
+            list = js.decode(self.req.request('POST','/user/recs',headers=self.HEADERS,fields= {"limit":40}).data)['results']
+            users+= [x['bio'].lower() for x in list ]
+        elif type(keywords) == type([]):
+            while users.__len__() < numOfUsers:
+                list = js.decode(self.req.request('POST','/user/recs',headers=self.HEADERS,fields= {"limit":40}).data)['results']
+                users+=[(ext in x['bio'] for ext in keywords) for x in list]
+        elif type(keywords) == type(""):
+            while users.__len__() < numOfUsers:
+                list = js.decode(self.req.request('POST','/user/recs',headers=self.HEADERS,fields= {"limit":40}).data)['results']
+                users+=[x for x in list if keywords in x['bio'].lower()]
+        else:
+            raise(ValueError('Please enter either a string or an array of strings for the keywords variable'))
+        return users
     def likePeople(self,num):
-        while num >0:
-            peopleList =  js.decode(self.req.request('POST','/user/recs',headers=HEADERS,fields= {"limit":40}).data)
-            people = peopleList['results']
+        while num:
+            recList =  js.decode(self.req.request('POST','/user/recs',headers=self.HEADERS,fields= {"limit":40}).data)
+            people = recList['results']
             for i in people:
-                if num>0:
-                    if i['gender'] == 1:
-                        num-=1
-                        print i['name'],': Match' if self.req.request('GET','/like/'+i['_id'],headers=HEADERS).data != '{"match":false}' else ''
-                        time.sleep(.2)
+                if num:
+                    num-=1
+                    print i['name'],': Match' if self.req.request('GET','/like/'+i['_id'],headers=self.HEADERS).data != '{"match":false}' else ''
+                    time.sleep(.2)
     def handleUpdate(self,request):
         if request:
-            print request
             self.last_activity_date = request['last_activity_date']
             if request['matches']:
-                matches = request['matches']
-                for i in matches:
+                pastMatches = request['matches']
+                for i in pastMatches:
                     if i.has_key('person'):
-                        matches.append([person(i['person']),(i.has_key('messages') and i['messages'] != [])])
+                        matches.append([i['person']['name'],(i.has_key('messages') and i['messages'] != [])])
     def update(self):
-        return self.handleUpdate(js.decode(self.req.request('POST','/updates',headers=HEADERS,fields= {'last_activity_date': self.last_activity_date if hasattr(self, 'last_activity_date') else '2014-04-07T06:36:49.027Z'}).data))
+        return self.handleUpdate(js.decode(self.req.request('POST','/updates',headers=self.HEADERS,fields= {'last_activity_date': self.last_activity_date if hasattr(self, 'last_activity_date') else '2014-04-07T06:36:49.027Z'}).data))
     def sendMessage(self, message, id):
-        print self.req.request('POST','/user/matches/'+ id,headers=HEADERS,fields= {"message":message}).data
+        print self.req.request('POST','/user/matches/'+ id,headers=self.HEADERS,fields= {"message":message}).data
     def getMatches(self, id):
-        print self.req.request('GET','/user/matches/'+ id,headers=HEADERS).data
+        print self.req.request('GET','/user/matches/'+ id,headers=self.HEADERS).data
+HEADERS = {'Accept-Language': 'en-GB;q=1, en;q=0.9, fr;q=0.8, de;q=0.7, ja;q=0.6, nl;q=0.5',
+                    'User-Agent': 'Tinder/3.0.3 (iPhone; iOS 7.0.6; Scale/2.00)',
+                    'os_version': '70000000006',
+                    'Accept': '*/*',
+                    'platform': 'ios',
+                    'Connection': 'keep-alive',
+                    'Proxy-Connection': 'keep-alive',
+                    'app_version': '1',
+                    'Accept-Encoding': 'gzip, deflate',
+        }
 
-HEADERS = {
-    'Accept-Language': 'en-GB;q=1, en;q=0.9, fr;q=0.8, de;q=0.7, ja;q=0.6, nl;q=0.5',
-    'User-Agent': 'Tinder/3.0.3 (iPhone; iOS 7.0.6; Scale/2.00)',
-    'X-Auth-Token':'1a5069f1-4f11-4a08-a9ab-4c41544ad34e',
-    'os_version': '70000000006',
-    'Accept': '*/*',
-    'platform': 'ios',
-    'Connection': 'keep-alive',
-    'Proxy-Connection': 'keep-alive',
-    'app_version': '1',
-    'Accept-Encoding': 'gzip, deflate',
-}
 c = client()
 c.update()
-c.likePeople(500)
 
 
 
