@@ -12,10 +12,10 @@ matches = []
 
 class person():
     def __init__(self, data):
-        if type(data) is type(str):
+        if type(data) is str:
             self.data = js.decode(data)
         else:
-            if type(data) is type(list):
+            if type(data) is dict:
                 self.data = data
             else:
                 raise Exception("Person isn't a string or dict")
@@ -25,7 +25,7 @@ class person():
             datetime.strptime(self.data['birth_date'].split('T')[0], "%Y-%M-%d").date())
 
     def getId(self):
-        return self.data['id']
+        return self.data['_id']
 
     def getName(self):
         return self.data['name']
@@ -62,6 +62,7 @@ class client():
             while users.__len__() < numOfUsers:
                 list = js.decode(self.req.request('POST', '/user/recs', headers=self.HEADERS, fields={"limit": 40}).data)['results']
                 users += [(ext in x['bio'] for ext in keywords) for x in list]
+
         elif type(keywords) == type(""):
             while users.__len__() < numOfUsers:
                 list = js.decode(self.req.request('POST', '/user/recs', headers=self.HEADERS, fields={"limit": 40}).data)['results']
@@ -78,9 +79,7 @@ class client():
                 if num:
                     num -= 1
                     response = self.req.request('GET', '/like/' + i['_id'], headers=self.HEADERS).data
-                    print i['name'], response,
-                    if response is not '{"match":false}':
-                        print 'match'
+                    print i['name'] , ': Match! ' if response != '{"match":false}' else ''
                     time.sleep(.2)
 
     def handleUpdate(self, request):
@@ -90,7 +89,8 @@ class client():
                 pastMatches = request['matches']
                 for i in pastMatches:
                     if i.has_key('person'):
-                        matches.append([i['person']['name'], (i.has_key('messages') and i['messages'] != [])])
+
+                        matches.append([person(i['person']), (i.has_key('messages') and i['messages'] != [])])
 
     def update(self):
         return self.handleUpdate(js.decode(self.req.request('POST', '/updates', headers=self.HEADERS, fields={
@@ -98,10 +98,10 @@ class client():
                                                                  'last_activity_date') else '2014-04-07T06:36:49.027Z'}).data))
 
     def sendMessage(self, message, id):
-        print self.req.request('POST', '/user/matches/' + id, headers=self.HEADERS, fields={"message": message}).data
+        return self.req.request('POST', '/user/matches/' + id, headers=self.HEADERS, fields={"message": message}).data
 
     def getMatches(self, id):
-        print self.req.request('GET', '/user/matches/' + id, headers=self.HEADERS).data
+        return self.req.request('GET', '/user/matches/' + id, headers=self.HEADERS).data
 
 
 HEADERS = {'Accept-Language': 'en-GB;q=1, en;q=0.9, fr;q=0.8, de;q=0.7, ja;q=0.6, nl;q=0.5',
@@ -117,6 +117,5 @@ HEADERS = {'Accept-Language': 'en-GB;q=1, en;q=0.9, fr;q=0.8, de;q=0.7, ja;q=0.6
 
 c = client()
 c.update()
-
-
+print c.sendMessage('Hey there', matches[0][0].getId())
 
