@@ -79,6 +79,7 @@ class client():
                 if num:
                     num -= 1
                     response = self.req.request('GET', '/like/' + i['_id'], headers=self.HEADERS).data
+
                     print i['name'] , ': Match! ' if response != '{"match":false}' else ''
                     time.sleep(.2)
 
@@ -89,8 +90,7 @@ class client():
                 pastMatches = request['matches']
                 for i in pastMatches:
                     if i.has_key('person'):
-
-                        matches.append([person(i['person']), (i.has_key('messages') and i['messages'] != [])])
+                        matches.append([person(i['person']), (i.has_key('messages') and i['messages'] != []), i['_id']])
 
     def update(self):
         return self.handleUpdate(js.decode(self.req.request('POST', '/updates', headers=self.HEADERS, fields={
@@ -117,5 +117,5 @@ HEADERS = {'Accept-Language': 'en-GB;q=1, en;q=0.9, fr;q=0.8, de;q=0.7, ja;q=0.6
 
 c = client()
 c.update()
-print c.sendMessage('Hey there', matches[0][0].getId())
+print len(matches)
 
