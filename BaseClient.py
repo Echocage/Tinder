@@ -3,12 +3,17 @@ import urllib3 as url
 from token import *
 import json
 import time
-
+from dateutil.parser import parse
 last_activity_date = '2014-04-09T04:41:38.276Z'
 js = json.JSONDecoder()
 URL = 'api.gotinder.com'
 matches = []
 
+TOKYO =  {u'lat': 35.678403, u'lon': 139.670506}
+SIGNGAPORE = {u'lat': 1.290301, u'lon': 103.844555}
+PARIS =  {u'lat': 48.856614, u'lon': 2.352222}
+NYC =  {u'lat': 40.738187, u'lon': -74.005204}
+location = NYC
 
 class person():
     def __init__(self, data):
@@ -33,9 +38,6 @@ class person():
     def getBio(self):
         return self.data['bio']
 
-    def likeUser(self):
-        None
-
     def __str__(self):
         return str(self.data)
 
@@ -51,7 +53,8 @@ class client():
         self.req = url.HTTPSConnectionPool(URL)
         self.HEADERS = HEADERS
         self.HEADERS['X-Auth-Token'] = js.decode(self.req.request('POST', '/auth', fields={"facebook_token": facebook_token}).data)['token']
-
+    def updateLocation(self,location):
+        return self.req.request('POST', '/user/ping', headers=self.HEADERS, fields=location).data
     def gatherUsersInfo(self, numOfUsers, keywords=None):
         users = []
         if keywords is None:
@@ -77,6 +80,7 @@ class client():
             people = recList['results']
             for i in people:
                 if num:
+
                     num -= 1
                     response = self.req.request('GET', '/like/' + i['_id'], headers=self.HEADERS).data
 
@@ -117,5 +121,4 @@ HEADERS = {'Accept-Language': 'en-GB;q=1, en;q=0.9, fr;q=0.8, de;q=0.7, ja;q=0.6
 
 c = client()
 c.update()
-print len(matches)
 
