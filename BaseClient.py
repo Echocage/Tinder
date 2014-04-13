@@ -15,6 +15,16 @@ PARIS =  {u'lat': 48.856614, u'lon': 2.352222}
 NYC =  {u'lat': 40.738187, u'lon': -74.005204}
 location = NYC
 
+def calc_age(dob):
+    today = date.today()
+    try:
+        birthday = dob.replace(year=today.year)
+    except ValueError: # raised when birth date is February 29 and the current year is not a leap year
+        birthday = dob.replace(year=today.year, month=dob.month+1, day=1)
+    if birthday > today:
+        return today.year - dob.year - 1
+    else:
+        return today.year - dob.year
 class person():
     def __init__(self, data):
         if type(data) is str:
@@ -49,10 +59,10 @@ class person():
 
 
 class client():
-    def __init__(self):
+    def __init__(self,token):
         self.req = url.HTTPSConnectionPool(URL)
         self.HEADERS = HEADERS
-        self.HEADERS['X-Auth-Token'] = js.decode(self.req.request('POST', '/auth', fields={"facebook_token": facebook_token}).data)['token']
+        self.HEADERS['X-Auth-Token'] = js.decode(self.req.request('POST', '/auth', fields={"facebook_token": token}).data)['token']
     def updateLocation(self,location):
         return self.req.request('POST', '/user/ping', headers=self.HEADERS, fields=location).data
     def gatherUsersInfo(self, numOfUsers, keywords=None):
@@ -121,4 +131,3 @@ HEADERS = {'Accept-Language': 'en-GB;q=1, en;q=0.9, fr;q=0.8, de;q=0.7, ja;q=0.6
 
 c = client()
 c.update()
-
