@@ -12,25 +12,23 @@ def calc_age(dob):
         return today.year - dob.year
 class person():
     def __init__(self, data):
-        if type(data) is str:
-            self.data = json.JSONDecoder().decode(data)
-        else:
-            if type(data) is dict:
-                self.data = data
-            else:
-                raise Exception("Person isn't a string or dict")
+        self.data = data
 
-    def getAge(self):
-        return self.age if hasattr(self, 'age') else calc_age(
+    @property
+    def age(self):
+        return calc_age(
             datetime.strptime(self.data['birth_date'].split('T')[0], "%Y-%M-%d").date())
 
-    def getId(self):
+    @property
+    def id(self):
         return self.data['_id']
 
-    def getName(self):
+    @property
+    def name(self):
         return self.data['name']
 
-    def getBio(self):
+    @property
+    def bio(self):
         return self.data['bio']
 
     def __str__(self):
@@ -41,3 +39,52 @@ class person():
 
     def __repr__(self):
         return self.getName()
+class message():
+    def __init__(self,data):
+        self.data = data
+
+    @property
+    def x(self):
+        return self.date['sent_date']
+    
+    @property
+    def match_id(self):
+        return self.date['match_id']
+
+    @property
+    def timestamp(self):
+        return self.date['timestamp']
+
+    @property
+    def to(self):
+        return self.date['to']
+    @property
+    def created_date(self):
+        return self.date['created_date']
+
+    @property
+    def fromField(self):
+        return self.date['from']
+
+    @property
+    def getMessage(self):
+        return self.date['message']
+    @property
+    def Id(self):
+        return self.date['_id']
+
+class userOverview():
+    def __init__(self, data):
+        self.data = data
+        self.user = person(data['person'])
+    @property
+    def match_id(self):
+        return self.data['_id']
+    @property
+    def messages(self):
+        return [message(x) for x in self.data['messages'] ]
+
+    @property
+    def closed(self):
+        return self.data['closed']
+
