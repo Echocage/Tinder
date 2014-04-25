@@ -45,33 +45,36 @@ class message():
 
     @property
     def x(self):
-        return self.date['sent_date']
+        return self.data['sent_data']
     
     @property
     def match_id(self):
-        return self.date['match_id']
+        return self.data['match_id']
 
     @property
     def timestamp(self):
-        return self.date['timestamp']
+        return self.data['timestamp']
 
     @property
     def to(self):
-        return self.date['to']
+        return self.data['to']
     @property
-    def created_date(self):
-        return self.date['created_date']
+    def created_data(self):
+        return self.data['created_data']
 
     @property
     def fromField(self):
-        return self.date['from']
+        return self.data['from']
 
     @property
-    def getMessage(self):
-        return self.date['message']
+    def message(self):
+        return self.data['message']
     @property
-    def Id(self):
-        return self.date['_id']
+    def id(self):
+        return self.data['_id']
+
+    def __str__(self):
+        return message
 
 class userOverview():
     def __init__(self, data):
@@ -82,7 +85,7 @@ class userOverview():
         return self.data['_id']
     @property
     def messages(self):
-        return [message(x) for x in self.data['messages'] ]
+        return [message(x) for x in self.data['messages']]
 
     @property
     def closed(self):

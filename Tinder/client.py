@@ -1,32 +1,32 @@
+from threading import Thread
 import time
 import requests
 import urllib3 as url
-from objects import person
+from objects import person,userOverview
 from token import *
-import json
-import datetime
+
 last_activity_date = '2014-04-09T04:41:38.276Z'
 
 URL = 'https://api.gotinder.com'
-matches = []
 
 TOKYO =  {u'lat': 35.678403, u'lon': 139.670506}
 SIGNGAPORE = {u'lat': 1.290301, u'lon': 103.844555}
 PARIS =  {u'lat': 48.856614, u'lon': 2.352222}
 NYC =  {u'lat': 40.738187, u'lon': -74.005204}
 location = NYC
-
+theInteger = 0
 def datetimeToTimestamp(datetime):
     split = str(datetime).split(' ')
     return split[0]+'T'+split[1]+'Z'
-
+def processMessages(data):
+    print data
 class BaseClient():
-
     def __init__(self,token):
         self.req = url.HTTPSConnectionPool(URL)
         self.HEADERS = HEADERS
-        self.HEADERS['X-Auth-Token'] = requests.post(URL+'/auth', data= {"facebook_token":token}).json()['token']
-
+        r = requests.post(URL+'/auth', data= {"facebook_token":token}).json()
+        self.HEADERS['X-Auth-Token'] = r['token']
+        self.id = r['user']['_id']
     def updateLocation(self,location):
         return requests.post(URL+'/user/ping', headers=self.HEADERS, data=location).json()
 
@@ -49,13 +49,21 @@ class ExampleClient(BaseClient):
         while(len(users) < numusers):
             users += self.getRecs()['results']
         return users
-    def likeUsers(self, users):
+
+    def likeUsers(self, numUsers):
+        users = self.getUsers(numUsers)
         for i in users:
             print self.likeUser(i['_id'])
 
-
-
-
+    def likeUsers(self):
+            global theInteger
+            try:
+                for i in self.getRecs()['results']:
+                    self.likeUser(i['_id'])
+                    theInteger +=1
+            except KeyError:
+                print 'All done'
+                theInteger = 200000000000000
 
 HEADERS = {'Accept-Language': 'en-GB;q=1, en;q=0.9, fr;q=0.8, de;q=0.7, ja;q=0.6, nl;q=0.5',
            'User-Agent': 'Tinder/3.0.3 (iPhone; iOS 7.0.6; Scale/2.00)',
@@ -67,7 +75,18 @@ HEADERS = {'Accept-Language': 'en-GB;q=1, en;q=0.9, fr;q=0.8, de;q=0.7, ja;q=0.6
            'app_version': '1',
            'Accept-Encoding': 'gzip, deflate',}
 
-ec = ExampleClient(facebook_token)
-date = datetimeToTimestamp(datetime.datetime.today() - datetime.timedelta(minutes=20))
-print ec.getUpdate(date)
+def main():
+    ec = ExampleClient(facebook_token)
+    for i in ec.getUpdate()['matches']:
+            i = userOverview(i)
+            if any([x for x in i.messages if x.to == ec.id]):
+                for message in i.messages:
+                    if message.to == ec.id:
+                        print i.user.name+':', message.message
+                    else:
+                        print 'Me:',message.message
+                print '==================='
+
+if __name__ == "__main__":
+    main()
 
