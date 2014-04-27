@@ -1,6 +1,8 @@
 from threading import Thread
 import time
+import datetime
 import requests
+from simplejson import JSONDecodeError
 import urllib3 as url
 from objects import person,userOverview
 from token import *
@@ -56,14 +58,37 @@ class ExampleClient(BaseClient):
             print self.likeUser(i['_id'])
 
     def likeUsers(self):
-            global theInteger
+        global theInteger
+        while True:
             try:
-                for i in self.getRecs()['results']:
+                rec = self.getRecs()['results']
+                for i in rec:
                     self.likeUser(i['_id'])
-                    theInteger +=1
+                    theInteger+=1
+                print theInteger
+            except JSONDecodeError:
+                print 'JsonError'
+                time.sleep(60)
             except KeyError:
-                print 'All done'
-                theInteger = 200000000000000
+                break
+    def SearchForMatchesLoop(self):
+        global j
+        threadPool = []
+        ec = ExampleClient(facebook_token)
+        for i in xrange(10):
+            t = Thread(target=ec.likeUsers)
+            t.start()
+            threadPool.append(t)
+        print 'Done creating threads'
+        while True:
+            if len([x for x in threadPool if x.is_alive()]) == 0:
+                print 'Thread Pool is empty...', theInteger
+                while not 'results' in ec.getRecs().keys():
+                    time.sleep(20)
+                print 'Found new people... restarting'
+                Thread(target=main).start()
+                break
+
 
 HEADERS = {'Accept-Language': 'en-GB;q=1, en;q=0.9, fr;q=0.8, de;q=0.7, ja;q=0.6, nl;q=0.5',
            'User-Agent': 'Tinder/3.0.3 (iPhone; iOS 7.0.6; Scale/2.00)',
@@ -74,18 +99,11 @@ HEADERS = {'Accept-Language': 'en-GB;q=1, en;q=0.9, fr;q=0.8, de;q=0.7, ja;q=0.6
            'Proxy-Connection': 'keep-alive',
            'app_version': '1',
            'Accept-Encoding': 'gzip, deflate',}
-
+j = 0
 def main():
     ec = ExampleClient(facebook_token)
-    for i in ec.getUpdate()['matches']:
-            i = userOverview(i)
-            if any([x for x in i.messages if x.to == ec.id]):
-                for message in i.messages:
-                    if message.to == ec.id:
-                        print i.user.name+':', message.message
-                    else:
-                        print 'Me:',message.message
-                print '==================='
+    ec.SearchForMatchesLoop()
+
 
 if __name__ == "__main__":
     main()
