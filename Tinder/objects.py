@@ -10,6 +10,8 @@ def calc_age(dob):
         return today.year - dob.year - 1
     else:
         return today.year - dob.year
+
+
 class person():
     def __init__(self, data):
         self.data = data
@@ -39,12 +41,14 @@ class person():
 
     def __repr__(self):
         return self.getName()
+
+
 class message():
     def __init__(self,data):
         self.data = data
 
     @property
-    def x(self):
+    def sent_data(self):
         return self.data['sent_data']
     
     @property
@@ -74,7 +78,8 @@ class message():
         return self.data['_id']
 
     def __str__(self):
-        return message
+        return str(self.data)
+
 
 class userOverview():
     def __init__(self, data):
@@ -83,15 +88,20 @@ class userOverview():
             if 'person' in data.keys():
                 self.user = person(data['person'])
             else:
+                #TODO: Add support for updating old person
+                #This will happen when an update is not of a new user, such as receiving a new message
                 raise TypeError("Dictionary doesn't contain a person key... not yet supported")
         else:
-            raise TypeError
+            raise TypeError('Data passed in should be a dictionary')
     @property
     def match_id(self):
         return self.data['_id']
     @property
     def messages(self):
-        return [message(x) for x in self.data['messages']]
+        if self.data['messages'] != []:
+            return [message(x) for x in self.data['messages']]
+        else:
+            return None
 
     @property
     def closed(self):
