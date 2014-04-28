@@ -79,7 +79,13 @@ class message():
 class userOverview():
     def __init__(self, data):
         self.data = data
-        self.user = person(data['person'])
+        if type(data) == dict:
+            if 'person' in data.keys():
+                self.user = person(data['person'])
+            else:
+                raise TypeError("Dictionary doesn't contain a person key... not yet supported")
+        else:
+            raise TypeError
     @property
     def match_id(self):
         return self.data['_id']

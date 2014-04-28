@@ -16,7 +16,7 @@ SIGNGAPORE = {u'lat': 1.290301, u'lon': 103.844555}
 PARIS =  {u'lat': 48.856614, u'lon': 2.352222}
 NYC =  {u'lat': 40.738187, u'lon': -74.005204}
 location = NYC
-theInteger = 0
+numberOfLikedUsers = 0
 def datetimeToTimestamp(datetime):
     split = str(datetime).split(' ')
     return split[0]+'T'+split[1]+'Z'
@@ -58,21 +58,19 @@ class ExampleClient(BaseClient):
             print self.likeUser(i['_id'])
 
     def likeUsers(self):
-        global theInteger
+        global numberOfLikedUsers
         while True:
             try:
                 rec = self.getRecs()['results']
                 for i in rec:
                     self.likeUser(i['_id'])
-                    theInteger+=1
-                print theInteger
+                    numberOfLikedUsers+=1
             except JSONDecodeError:
                 print 'JsonError'
                 time.sleep(60)
             except KeyError:
                 break
     def SearchForMatchesLoop(self):
-        global j
         threadPool = []
         ec = ExampleClient(facebook_token)
         for i in xrange(10):
@@ -82,7 +80,7 @@ class ExampleClient(BaseClient):
         print 'Done creating threads'
         while True:
             if len([x for x in threadPool if x.is_alive()]) == 0:
-                print 'Thread Pool is empty...', theInteger
+                print 'Thread Pool is empty...', numberOfLikedUsers
                 while not 'results' in ec.getRecs().keys():
                     time.sleep(20)
                 print 'Found new people... restarting'
@@ -98,8 +96,9 @@ HEADERS = {'Accept-Language': 'en-GB;q=1, en;q=0.9, fr;q=0.8, de;q=0.7, ja;q=0.6
            'Connection': 'keep-alive',
            'Proxy-Connection': 'keep-alive',
            'app_version': '1',
-           'Accept-Encoding': 'gzip, deflate',}
-j = 0
+           'Accept-Encoding': 'gzip, deflate'}
+
+
 def main():
     ec = ExampleClient(facebook_token)
     ec.SearchForMatchesLoop()
