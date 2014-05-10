@@ -88,8 +88,7 @@ class userOverview():
             if 'person' in data.keys():
                 self.user = person(data['person'])
             else:
-                #TODO: Add support for updating old person
-                #This will happen when an update is not of a new user, such as receiving a new message
+                #TODO: Add support for user already loaded into memory
                 raise TypeError("Dictionary doesn't contain a person key... not yet supported")
         else:
             raise TypeError('Data passed in should be a dictionary')
